@@ -1,14 +1,15 @@
 ﻿  Source.cpp
-C:\Users\jonat\source\repos\Parchis\Dependencies\include\SFML\System\Exception.hpp(41,47): warning C4275: se ha utilizado una interfaz no de DLL class 'std::runtime_error' como base para la interfaz DLL class 'sf::Exception'
+C:\Users\andri\source\repos\ParchisServer\Dependencies\include\SFML\System\Exception.hpp(41,47): warning C4275: se ha utilizado una interfaz no de DLL class 'std::runtime_error' como base para la interfaz DLL class 'sf::Exception'
   (compilando archivo de origen "Source.cpp")
       C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\stdexcept(100,19):
       vea la declaración de 'std::runtime_error'
-      C:\Users\jonat\source\repos\Parchis\Dependencies\include\SFML\System\Exception.hpp(41,23):
+      C:\Users\andri\source\repos\ParchisServer\Dependencies\include\SFML\System\Exception.hpp(41,23):
       vea la declaración de 'sf::Exception'
   
-C:\Users\jonat\source\repos\Parchis\Parchis\Source.cpp(3,6): warning C4326: el tipo de valor devuelto de 'main' debe ser 'int' en lugar de 'void'
+C:\Users\andri\source\repos\ParchisServer\Parchis\Source.cpp(8,6): warning C4326: el tipo de valor devuelto de 'main' debe ser 'int' en lugar de 'void'
   Generando código
-  Previous IPDB not found, fall back to full compilation.
-  All 10 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  1 of 55 functions ( 1.8%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
   Generación de código finalizada
-  Parchis.vcxproj -> C:\Users\jonat\source\repos\Parchis\x64\Release\Parchis.exe
+  Parchis.vcxproj -> C:\Users\andri\source\repos\ParchisServer\x64\Release\Parchis.exe

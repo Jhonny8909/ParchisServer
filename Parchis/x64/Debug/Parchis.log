@@ -1,1 +1,10 @@
-﻿  Parchis.vcxproj -> C:\Users\jonat\source\repos\Parchis\x64\Debug\Parchis.exe
+﻿  Source.cpp
+C:\Users\andri\source\repos\ParchisServer\Dependencies\include\SFML\System\Exception.hpp(41,47): warning C4275: se ha utilizado una interfaz no de DLL class 'std::runtime_error' como base para la interfaz DLL class 'sf::Exception'
+  (compilando archivo de origen "Source.cpp")
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\stdexcept(100,19):
+      vea la declaración de 'std::runtime_error'
+      C:\Users\andri\source\repos\ParchisServer\Dependencies\include\SFML\System\Exception.hpp(41,23):
+      vea la declaración de 'sf::Exception'
+  
+C:\Users\andri\source\repos\ParchisServer\Parchis\Source.cpp(8,6): warning C4326: el tipo de valor devuelto de 'main' debe ser 'int' en lugar de 'void'
+  Parchis.vcxproj -> C:\Users\andri\source\repos\ParchisServer\x64\Debug\Parchis.exe
