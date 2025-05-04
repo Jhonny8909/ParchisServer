@@ -1,10 +1,9 @@
 ﻿  Source.cpp
-C:\Users\andri\source\repos\ParchisServer\Dependencies\include\SFML\System\Exception.hpp(41,47): warning C4275: se ha utilizado una interfaz no de DLL class 'std::runtime_error' como base para la interfaz DLL class 'sf::Exception'
-  (compilando archivo de origen "Source.cpp")
+E:\ENTI\Juegos En Red\ParchisServer\Dependencies\include\SFML\System\Exception.hpp(41,47): warning C4275: non dll-interface class 'std::runtime_error' used as base for dll-interface class 'sf::Exception'
+  (compiling source file 'Source.cpp')
       C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\stdexcept(100,19):
-      vea la declaración de 'std::runtime_error'
-      C:\Users\andri\source\repos\ParchisServer\Dependencies\include\SFML\System\Exception.hpp(41,23):
-      vea la declaración de 'sf::Exception'
+      see declaration of 'std::runtime_error'
+      E:\ENTI\Juegos En Red\ParchisServer\Dependencies\include\SFML\System\Exception.hpp(41,23):
+      see declaration of 'sf::Exception'
   
-C:\Users\andri\source\repos\ParchisServer\Parchis\Source.cpp(8,6): warning C4326: el tipo de valor devuelto de 'main' debe ser 'int' en lugar de 'void'
-  Parchis.vcxproj -> C:\Users\andri\source\repos\ParchisServer\x64\Debug\Parchis.exe
+E:\ENTI\Juegos En Red\ParchisServer\Parchis\Source.cpp(5,10): error C1083: Cannot open include file: 'mysql_connection.h': No such file or directory
