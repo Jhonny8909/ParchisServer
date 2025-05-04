@@ -53,7 +53,9 @@ void manejarCliente(sf::TcpSocket* client) {
     std::string codigoSala;
     sf::Packet respuesta;
 
+
     while (true) {
+        std::cout << "Esperando datos del cliente..." << std::endl;
         sf::Socket::Status status = client->receive(packet);
         if (status == sf::Socket::Status::Disconnected) {
             std::cout << "Cliente desconectado\n";
@@ -63,6 +65,8 @@ void manejarCliente(sf::TcpSocket* client) {
             std::cerr << "Error al recibir paquete\n";
             break;
         }
+
+        std::cout << "Recibido paquete con " << packet.getDataSize() << " bytes" << std::endl;
 
         // Limpiar valores previos
         accion.clear();

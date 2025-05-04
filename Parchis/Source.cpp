@@ -161,16 +161,19 @@ void disconnectDatabase(sql::Connection* con) {
 
 int main() {
     sf::TcpListener listener;
+    sf::TcpSocket client;
+    
+
+	bool isRunning = false;
 
     if (listener.listen(LISTENER_PORT) != sf::Socket::Status::Done) {
         std::cerr << "No se pudo abrir el puerto " << LISTENER_PORT << std::endl;
         return -1;
     }
-
     std::cout << "Servidor escuchando en el puerto " << LISTENER_PORT << std::endl;
 
-    while (true) {
-        sf::TcpSocket* client = new sf::TcpSocket;
+    while (!isRunning) {
+        sf::TcpSocket* client = new sf::TcpSocket();
 
         if (listener.accept(*client) == sf::Socket::Status::Done) {
             std::cout << "Cliente conectado desde " << client->getRemoteAddress().value() << std::endl;
@@ -178,7 +181,6 @@ int main() {
         }
         else {
             std::cerr << "Fallo al aceptar cliente" << std::endl;
-            delete client;
         }
     }
 
