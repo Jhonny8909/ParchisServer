@@ -9,9 +9,10 @@
 #include <cppconn/resultset.h>
 #include <openssl/evp.h>
 #include <openssl/sha.h>
+#include "Lobby.h"
 
 #define LISTENER_PORT 55000
-#define SERVER "127.0.0.1"
+/*#define SERVER "127.0.0.1"
 #define USERNAME "root"
 #define PASSWORD ""
 #define DATABASE "loginparchis"
@@ -57,7 +58,7 @@ void connectDatabase(sql::Driver*& driver, sql::Connection*& con) {
     try {
         driver = get_driver_instance();
         con = driver->connect(SERVER, USERNAME, PASSWORD);
-        std::cout << "Conexión exitosa a la base de datos." << std::endl;
+        std::cout << "Conexion exitosa a la base de datos." << std::endl;
         con->setSchema(DATABASE);
     }
     catch (sql::SQLException& e) {
@@ -103,7 +104,7 @@ bool loginUser(sql::Connection* con, const std::string& username, const std::str
         }
     }
     catch (sql::SQLException& e) {
-        std::cout << "Error al iniciar sesión: " << e.what() << std::endl;
+        std::cout << "Error al iniciar sesion: " << e.what() << std::endl;
         return false;
     }
 }
@@ -152,94 +153,35 @@ void disconnectDatabase(sql::Connection* con) {
     if (con != nullptr) {
         con->close();
         delete con;
-        std::cout << "Conexión cerrada correctamente." << std::endl;
+        std::cout << "Conexion cerrada correctamente." << std::endl;
     }
 }
+*/
+//std::map<std::string, sf::IpAddress> salas;
 
 int main() {
     sf::TcpListener listener;
-    sql::Driver* driver;
-    sql::Connection* con;
-
-    connectDatabase(driver, con);
-
-    if (con == nullptr || con->isClosed()) {
-        std::cout << "No se pudo establecer conexión con la base de datos." << std::endl;
-        return 1;
-    }
 
     if (listener.listen(LISTENER_PORT) != sf::Socket::Status::Done) {
-        std::cerr << "Error al escuchar el puerto " << LISTENER_PORT << std::endl;
-        return 1;
+        std::cerr << "No se pudo abrir el puerto " << LISTENER_PORT << std::endl;
+        return -1;
     }
 
-    std::cout << "Esperando conexión en el puerto " << LISTENER_PORT << std::endl;
-
-    sf::TcpSocket client;
-    if (listener.accept(client) != sf::Socket::Status::Done) {
-        std::cerr << "Error al aceptar conexión del cliente" << std::endl;
-        return 1;
-    }
-
-    std::cout << "Cliente conectado desde: " << client.getRemoteAddress().value() << std::endl;
+    std::cout << "Servidor escuchando en el puerto " << LISTENER_PORT << std::endl;
 
     while (true) {
-        sf::Packet packet;
-        sf::Socket::Status status = client.receive(packet);
+        sf::TcpSocket* client = new sf::TcpSocket;
 
-        if (status == sf::Socket::Status::Disconnected) {
-            std::cout << "Cliente desconectado" << std::endl;
-            break;
-        }
-        else if (status != sf::Socket::Status::Done) {
-            std::cerr << "Error al recibir el paquete" << std::endl;
-            break;
-        }
-
-        // Debug: Print raw packet size
-        std::cout << "Packet size received: " << packet.getDataSize() << " bytes" << std::endl;
-
-        // Extract data with proper error checking
-        bool isLogin;
-        std::string username;
-        std::string password;
-
-        if (!(packet >> isLogin)) {
-            std::cerr << "Failed to extract isLogin flag" << std::endl;
-            continue;
-        }
-
-        if (!(packet >> username)) {
-            std::cerr << "Failed to extract username" << std::endl;
-            continue;
-        }
-
-        if (!(packet >> password)) {
-            std::cerr << "Failed to extract password" << std::endl;
-            continue;
-        }
-
-        std::cout << "Received data - isLogin: " << isLogin
-            << ", username: " << username
-            << ", password: " << password << std::endl;
-
-        // Process the request
-        bool success;
-        if (isLogin) {
-            success = loginUser(con, username, password);
+        if (listener.accept(*client) == sf::Socket::Status::Done) {
+            std::cout << "Cliente conectado desde " << client->getRemoteAddress().value() << std::endl;
+            std::thread(manejarCliente, client).detach();
         }
         else {
-            success = registerUser(con, username, password);
-        }
-
-        // Send response
-        sf::Packet responsePacket;
-        responsePacket << success;
-        if (client.send(responsePacket) != sf::Socket::Status::Done) {
-            std::cerr << "Error al enviar respuesta al cliente" << std::endl;
+            std::cerr << "Fallo al aceptar cliente" << std::endl;
+            delete client;
         }
     }
 
-    disconnectDatabase(con);
     return 0;
 }
+    
