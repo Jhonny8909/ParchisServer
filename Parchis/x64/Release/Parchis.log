@@ -7,8 +7,8 @@ C:\Users\andri\source\repos\ParchisServer\Dependencies\include\SFML\System\Excep
       vea la declaración de 'sf::Exception'
   
   Generando código
-  1 of 261 functions ( 0.4%) were compiled, the rest were copied from previous compilation.
+  3 of 325 functions ( 0.9%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    1 functions had inline decision re-evaluated but remain unchanged
+    2 functions had inline decision re-evaluated but remain unchanged
   Generación de código finalizada
   Parchis.vcxproj -> C:\Users\andri\source\repos\ParchisServer\x64\Release\Parchis.exe
