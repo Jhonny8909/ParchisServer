@@ -99,6 +99,7 @@ bool loginUser(sql::Connection* con, const std::string& username, const std::str
         if (inputHashedPassword == storedHashedPassword) {
             std::cout << "Inicio de sesión exitoso. ¡Bienvenido, " << username << "!" << std::endl;
             return true;
+			
         }
         else {
             std::cout << "Error: Contraseña incorrecta." << std::endl;
@@ -265,6 +266,7 @@ int main() {
     disconnectDatabase(con);
     return 0;
 }
+
 /*
 int main() {
     sf::TcpListener listener;
