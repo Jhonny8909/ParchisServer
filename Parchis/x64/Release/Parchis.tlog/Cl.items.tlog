@@ -1,1 +1,7 @@
-C:\Users\jonat\source\repos\ParchisServer\Parchis\Source.cpp;C:\Users\jonat\source\repos\ParchisServer\Parchis\x64\Release\Source.obj
+C:\Users\jonat\source\repos\ParchisServer\Parchis\AuthService.cpp;C:\Users\jonat\source\repos\ParchisServer\Parchis\x64\Release\AuthService.obj
+C:\Users\jonat\source\repos\ParchisServer\Parchis\ClientHandler.cpp;C:\Users\jonat\source\repos\ParchisServer\Parchis\x64\Release\ClientHandler.obj
+C:\Users\jonat\source\repos\ParchisServer\Parchis\DatabaseManager.cpp;C:\Users\jonat\source\repos\ParchisServer\Parchis\x64\Release\DatabaseManager.obj
+C:\Users\jonat\source\repos\ParchisServer\Parchis\LobbyManager.cpp;C:\Users\jonat\source\repos\ParchisServer\Parchis\x64\Release\LobbyManager.obj
+C:\Users\jonat\source\repos\ParchisServer\Parchis\main.cpp;C:\Users\jonat\source\repos\ParchisServer\Parchis\x64\Release\main.obj
+C:\Users\jonat\source\repos\ParchisServer\Parchis\PacketHandler.cpp;C:\Users\jonat\source\repos\ParchisServer\Parchis\x64\Release\PacketHandler.obj
+C:\Users\jonat\source\repos\ParchisServer\Parchis\ServerManager.cpp;C:\Users\jonat\source\repos\ParchisServer\Parchis\x64\Release\ServerManager.obj

@@ -18,6 +18,23 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AuthService.cpp" />
+    <ClCompile Include="ClientHandler.cpp" />
+    <ClCompile Include="DatabaseManager.cpp" />
+    <ClCompile Include="LobbyManager.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="PacketHandler.cpp" />
+    <ClCompile Include="ServerManager.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AuthService.h" />
+    <ClInclude Include="ClientHandler.h" />
+    <ClInclude Include="DatabaseManager.h" />
+    <ClInclude Include="LobbyManager.h" />
+    <ClInclude Include="PacketHandler.h" />
+    <ClInclude Include="ServerManager.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -137,12 +154,6 @@
       <AdditionalDependencies>sfml-graphics.lib;sfml-window.lib;sfml-audio.lib;sfml-network.lib;sfml-system.lib;mysqlcppconn.lib;libcrypto.lib;libssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="Source.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Lobby.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

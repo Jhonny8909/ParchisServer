@@ -1,14 +1,16 @@
-﻿  Source.cpp
+﻿  main.cpp
 C:\Users\jonat\source\repos\ParchisServer\Dependencies\include\SFML\System\Exception.hpp(41,47): warning C4275: se ha utilizado una interfaz no de DLL class 'std::runtime_error' como base para la interfaz DLL class 'sf::Exception'
-  (compilando archivo de origen "Source.cpp")
-      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\stdexcept(100,19):
+  (compilando archivo de origen "main.cpp")
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\stdexcept(100,30):
       vea la declaración de 'std::runtime_error'
       C:\Users\jonat\source\repos\ParchisServer\Dependencies\include\SFML\System\Exception.hpp(41,23):
       vea la declaración de 'sf::Exception'
   
+C:\Users\jonat\source\repos\ParchisServer\Parchis\main.cpp(27,21): warning C4834: Descartar el valor de retorno de la función con el atributo [[nodiscard]]
+C:\Users\jonat\source\repos\ParchisServer\Parchis\main.cpp(49,21): warning C4834: Descartar el valor de retorno de la función con el atributo [[nodiscard]]
   Generando código
-  1 of 325 functions ( 0.3%) were compiled, the rest were copied from previous compilation.
+  5 of 841 functions ( 0.6%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    1 functions had inline decision re-evaluated but remain unchanged
+    7 functions had inline decision re-evaluated but remain unchanged
   Generación de código finalizada
   Parchis.vcxproj -> C:\Users\jonat\source\repos\ParchisServer\x64\Release\Parchis.exe

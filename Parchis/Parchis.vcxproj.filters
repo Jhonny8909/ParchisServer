@@ -13,15 +13,57 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Archivos de recursos\Autenticacion">
+      <UniqueIdentifier>{ab058ad2-be77-4408-90bb-a1c14b57411b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Archivos de recursos\Cliente/Servidor">
+      <UniqueIdentifier>{60980cd4-d7f4-4f32-8c7d-fe628c4bc7f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Archivos de recursos\Lobby">
+      <UniqueIdentifier>{7b3fe94a-34f7-450e-9572-1512d17a7189}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>Archivos de recursos</Filter>
+    </ClCompile>
+    <ClCompile Include="AuthService.cpp">
+      <Filter>Archivos de recursos\Autenticacion</Filter>
+    </ClCompile>
+    <ClCompile Include="DatabaseManager.cpp">
+      <Filter>Archivos de recursos\Autenticacion</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientHandler.cpp">
+      <Filter>Archivos de recursos\Cliente/Servidor</Filter>
+    </ClCompile>
+    <ClCompile Include="PacketHandler.cpp">
+      <Filter>Archivos de recursos\Cliente/Servidor</Filter>
+    </ClCompile>
+    <ClCompile Include="ServerManager.cpp">
+      <Filter>Archivos de recursos\Cliente/Servidor</Filter>
+    </ClCompile>
+    <ClCompile Include="LobbyManager.cpp">
+      <Filter>Archivos de recursos\Lobby</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Lobby.h">
-      <Filter>Archivos de recursos</Filter>
+    <ClInclude Include="AuthService.h">
+      <Filter>Archivos de recursos\Autenticacion</Filter>
+    </ClInclude>
+    <ClInclude Include="DatabaseManager.h">
+      <Filter>Archivos de recursos\Autenticacion</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientHandler.h">
+      <Filter>Archivos de recursos\Cliente/Servidor</Filter>
+    </ClInclude>
+    <ClInclude Include="PacketHandler.h">
+      <Filter>Archivos de recursos\Cliente/Servidor</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerManager.h">
+      <Filter>Archivos de recursos\Cliente/Servidor</Filter>
+    </ClInclude>
+    <ClInclude Include="LobbyManager.h">
+      <Filter>Archivos de recursos\Lobby</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
