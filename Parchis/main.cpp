@@ -29,22 +29,26 @@ void setupHandlers(PacketHandler& handler, LobbyManager& lobbyManager) {
 
     // Handler de lobby
     handler.registerHandler("LOBBY", [&lobbyManager](sf::TcpSocket* client, sf::Packet& packet) {
-        std::string action, code;
-        if (!(packet >> action >> code)) {
+        std::string action, code, playerIP;
+        if (!(packet >> action >> code >> playerIP)) {
             std::cerr << "Paquete LOBBY mal formado" << std::endl;
             return;
         }
 
-		std::cerr<< "accion: " << action << "codigo: " << code << std::endl;
-
         sf::Packet response;
         if (action == "CREAR") {
-            bool created = lobbyManager.createLobby(code, client);
+            bool created = lobbyManager.createLobby(code, client, playerIP);
             response << "LOBBY_RESPONSE" << (created ? "CREATED" : "EXISTS") << code;
+			std::cerr << "Lobby creado: " << code << std::endl;
         }
         else if (action == "UNIRSE") {
-            bool joined = lobbyManager.joinLobby(code, client);
-            response << "LOBBY_RESPONSE" << (joined ? "JOINED" : "FULL_OR_INVALID");
+            bool joined = lobbyManager.joinLobby(code, playerIP);
+            response << "LOBBY_RESPONSE" << (joined ? "JOINED" : "FULL_OR_INVALID") << code;
+
+            // Si la sala está llena, iniciar partida
+            if (joined && lobbyManager.getLobbyPlayers(code).size() == 4) {
+                lobbyManager.startGame(code);
+            }
         }
         client->send(response);
         });
