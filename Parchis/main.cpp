@@ -73,8 +73,7 @@ void setupHandlers(PacketHandler& handler, LobbyManager& lobbyManager) {
         });
 
     handler.registerHandler("PREPARE_P2P", [](sf::TcpSocket* client, sf::Packet& packet) {
-        std::cout << "[DEBUG] Peer preparado para aceptar conexiones P2P: "
-            << client->getRemoteAddress().value().toString() << std::endl;
+        std::cout << "[P2P] Preparando conexión P2P..." << std::endl;
         });
 }
 

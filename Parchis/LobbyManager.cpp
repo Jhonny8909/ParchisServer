@@ -33,26 +33,20 @@ void LobbyManager::startGame(const std::string& code) {
             sf::Packet preparePacket;
             preparePacket << "PREPARE_P2P";
             notifier.send(preparePacket);
-            std::cout << "[DEBUG] Notificado peer " << lobby.playerIPs[i] << " para preparar conexión" << std::endl;
+            std::cout << "[P2P] Peer " << lobby.playerIPs[i] << " preparado" << std::endl;
         }
     }
 
-    // 2. Pequeña espera para que los peers preparen sus listeners
+    // 2. Esperar 1 segundo para que los peers preparen sus listeners
     sf::sleep(sf::seconds(1));
 
-    // 3. Ahora notificar al HOST para que se conecte
+    // 3. Ahora notificar al HOST para que inicie conexiones
     sf::Packet hostPacket;
     hostPacket << "GAME_START" << "HOST";
     for (size_t i = 1; i < lobby.playerIPs.size(); ++i) {
         hostPacket << lobby.playerIPs[i];
     }
-
-    if (lobby.host->send(hostPacket) != sf::Socket::Status::Done) {
-        std::cerr << "[ERROR] Failed to notify host" << std::endl;
-    }
-    else {
-        std::cout << "[DEBUG] Host notificado para iniciar conexiones P2P" << std::endl;
-    }
+    lobby.host->send(hostPacket);
 
     lobbies.erase(code);
 }
