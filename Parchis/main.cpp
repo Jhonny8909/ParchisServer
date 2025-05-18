@@ -35,27 +35,46 @@ void setupHandlers(PacketHandler& handler, LobbyManager& lobbyManager) {
             return;
         }
 
+        std::cout << "\n[LOBBY_DEBUG] Solicitud recibida - Acción: " << action
+            << ", Código: " << code << ", IP: " << playerIP << std::endl;
+
         sf::Packet response;
 
         if (action == "CREAR") {
             bool created = lobbyManager.createLobby(code, client, playerIP);
             response << "LOBBY_RESPONSE" << (created ? "CREATED" : "EXISTS") << code;
-            std::cout << "Lobby " << code << (created ? " creado" : " ya existe") << "\n";
+            std::cout << "[LOBBY_DEBUG] Lobby " << code << (created ? " creado" : " ya existe") << "\n";
         }
         else if (action == "UNIRSE") {
             bool joined = lobbyManager.joinLobby(code, playerIP);
             response << "LOBBY_RESPONSE" << (joined ? "JOINED" : "FULL_OR_INVALID") << code;
-            std::cout << "Intento de unión a " << code << ": " << (joined ? "éxito" : "fallo") << "\n";
+            std::cout << "[LOBBY_DEBUG] Intento de unión a " << code << ": " << (joined ? "éxito" : "fallo") << "\n";
 
-            if (joined && lobbyManager.getLobbyPlayers(code).size() >= 2) {
-                lobbyManager.startGame(code);
-                std::cout << "Iniciando partida en lobby " << code << "\n";
+            if (joined) {
+                auto& players = lobbyManager.getLobbyPlayers(code);
+                std::cout << "[LOBBY_DEBUG] Jugadores actuales en " << code << " (" << players.size() << "):\n";
+                for (size_t i = 0; i < players.size(); ++i) {
+                    std::cout << " - " << players[i] << (i == 0 ? " (HOST)" : "") << std::endl;
+                }
+
+                if (players.size() >= 2) {
+                    std::cout << "[LOBBY_DEBUG] Iniciando partida...\n";
+                    lobbyManager.startGame(code);
+                }
             }
         }
 
         if (client->send(response) != sf::Socket::Status::Done) {
-            std::cerr << "Error enviando respuesta de lobby\n";
+            std::cerr << "[ERROR] Error enviando respuesta de lobby\n";
         }
+        else {
+            std::cout << "[LOBBY_DEBUG] Respuesta enviada al cliente\n";
+        }
+        });
+
+    handler.registerHandler("PREPARE_P2P", [](sf::TcpSocket* client, sf::Packet& packet) {
+        std::cout << "[DEBUG] Peer preparado para aceptar conexiones P2P: "
+            << client->getRemoteAddress().value().toString() << std::endl;
         });
 }
 

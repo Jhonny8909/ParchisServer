@@ -25,48 +25,38 @@ void LobbyManager::startGame(const std::string& code) {
     auto& lobby = lobbies[code];
     lobby.gameStarted = true;
 
-    // Notificar al host
+    // 1. Primero notificar a los PEERs que escuchen
+    for (size_t i = 1; i < lobby.playerIPs.size(); ++i) {
+        sf::TcpSocket notifier;
+        auto peerAddress = sf::IpAddress::resolve(lobby.playerIPs[i]);
+        if (peerAddress && notifier.connect(*peerAddress, 53000, sf::seconds(2)) == sf::Socket::Status::Done) {
+            sf::Packet preparePacket;
+            preparePacket << "PREPARE_P2P";
+            notifier.send(preparePacket);
+            std::cout << "[DEBUG] Notificado peer " << lobby.playerIPs[i] << " para preparar conexión" << std::endl;
+        }
+    }
+
+    // 2. Pequeña espera para que los peers preparen sus listeners
+    sf::sleep(sf::seconds(1));
+
+    // 3. Ahora notificar al HOST para que se conecte
     sf::Packet hostPacket;
     hostPacket << "GAME_START" << "HOST";
     for (size_t i = 1; i < lobby.playerIPs.size(); ++i) {
         hostPacket << lobby.playerIPs[i];
     }
 
-    // Versión corregida para SFML 3.0.0
     if (lobby.host->send(hostPacket) != sf::Socket::Status::Done) {
         std::cerr << "[ERROR] Failed to notify host" << std::endl;
     }
-
-    // Notificar a los peers
-    for (size_t i = 1; i < lobby.playerIPs.size(); ++i) {
-        sf::TcpSocket tempSocket;
-        auto peerAddress = sf::IpAddress::resolve(lobby.playerIPs[i]);
-
-        if (!peerAddress) {
-            std::cerr << "[ERROR] Could not resolve peer IP: " << lobby.playerIPs[i] << std::endl;
-            continue;
-        }
-
-        // Conexión con timeout explícito
-        if (tempSocket.connect(*peerAddress, 53000, sf::seconds(3)) != sf::Socket::Status::Done) {
-            std::cerr << "[ERROR] Failed to connect to peer: " << lobby.playerIPs[i] << std::endl;
-            continue;
-        }
-
-        sf::Packet peerPacket;
-        peerPacket << "GAME_START" << "PEER";
-        for (size_t j = i + 1; j < lobby.playerIPs.size(); ++j) {
-            peerPacket << lobby.playerIPs[j];
-        }
-
-        // Versión corregida para SFML 3.0.0
-        if (tempSocket.send(peerPacket) != sf::Socket::Status::Done) {
-            std::cerr << "[ERROR] Failed to send to peer: " << lobby.playerIPs[i] << std::endl;
-        }
+    else {
+        std::cout << "[DEBUG] Host notificado para iniciar conexiones P2P" << std::endl;
     }
 
     lobbies.erase(code);
 }
+
 const std::vector<std::string>& LobbyManager::getLobbyPlayers(const std::string& code) const {
     static std::vector<std::string> emptyVector; // Para retornar algo seguro si no se encuentra el lobby
 

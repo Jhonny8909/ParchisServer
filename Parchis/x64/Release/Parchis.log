@@ -1,4 +1,12 @@
-﻿  main.cpp
+﻿  LobbyManager.cpp
+C:\Users\jonat\source\repos\ParchisServer\Dependencies\include\SFML\System\Exception.hpp(41,47): warning C4275: se ha utilizado una interfaz no de DLL class 'std::runtime_error' como base para la interfaz DLL class 'sf::Exception'
+  (compilando archivo de origen "LobbyManager.cpp")
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\stdexcept(100,30):
+      vea la declaración de 'std::runtime_error'
+      C:\Users\jonat\source\repos\ParchisServer\Dependencies\include\SFML\System\Exception.hpp(41,23):
+      vea la declaración de 'sf::Exception'
+  
+  main.cpp
 C:\Users\jonat\source\repos\ParchisServer\Dependencies\include\SFML\System\Exception.hpp(41,47): warning C4275: se ha utilizado una interfaz no de DLL class 'std::runtime_error' como base para la interfaz DLL class 'sf::Exception'
   (compilando archivo de origen "main.cpp")
       C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\stdexcept(100,30):
@@ -8,8 +16,8 @@ C:\Users\jonat\source\repos\ParchisServer\Dependencies\include\SFML\System\Excep
   
 C:\Users\jonat\source\repos\ParchisServer\Parchis\main.cpp(27,21): warning C4834: Descartar el valor de retorno de la función con el atributo [[nodiscard]]
   Generando código
-  5 of 918 functions ( 0.5%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    8 functions had inline decision re-evaluated but remain unchanged
+  7 of 919 functions ( 0.8%) were compiled, the rest were copied from previous compilation.
+    1 functions were new in current compilation
+    12 functions had inline decision re-evaluated but remain unchanged
   Generación de código finalizada
   Parchis.vcxproj -> C:\Users\jonat\source\repos\ParchisServer\x64\Release\Parchis.exe
