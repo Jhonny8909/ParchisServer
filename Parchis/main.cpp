@@ -36,21 +36,26 @@ void setupHandlers(PacketHandler& handler, LobbyManager& lobbyManager) {
         }
 
         sf::Packet response;
+
         if (action == "CREAR") {
             bool created = lobbyManager.createLobby(code, client, playerIP);
             response << "LOBBY_RESPONSE" << (created ? "CREATED" : "EXISTS") << code;
-			std::cerr << "Lobby creado: " << code << std::endl;
+            std::cout << "Lobby " << code << (created ? " creado" : " ya existe") << "\n";
         }
         else if (action == "UNIRSE") {
             bool joined = lobbyManager.joinLobby(code, playerIP);
             response << "LOBBY_RESPONSE" << (joined ? "JOINED" : "FULL_OR_INVALID") << code;
+            std::cout << "Intento de unión a " << code << ": " << (joined ? "éxito" : "fallo") << "\n";
 
-            // Si la sala está llena, iniciar partida
-            if (joined && lobbyManager.getLobbyPlayers(code).size() == 4) {
+            if (joined && lobbyManager.getLobbyPlayers(code).size() >= 2) {
                 lobbyManager.startGame(code);
+                std::cout << "Iniciando partida en lobby " << code << "\n";
             }
         }
-        client->send(response);
+
+        if (client->send(response) != sf::Socket::Status::Done) {
+            std::cerr << "Error enviando respuesta de lobby\n";
+        }
         });
 }
 

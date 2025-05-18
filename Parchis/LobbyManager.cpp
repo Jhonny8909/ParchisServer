@@ -25,26 +25,31 @@ void LobbyManager::startGame(const std::string& code) {
     auto& lobby = lobbies[code];
     lobby.gameStarted = true;
 
-    // 1. Notificar al host
+    // Notificar al host
     sf::Packet hostPacket;
     hostPacket << "GAME_START" << "HOST";
     for (size_t i = 1; i < lobby.playerIPs.size(); ++i) {
         hostPacket << lobby.playerIPs[i];
     }
-    lobby.host->send(hostPacket);
 
-    // 2. Notificar a los peers
-    for (size_t i = 1; i < lobby.playerIPs.size() - 1; ++i) {
+    // Versión corregida para SFML 3.0.0
+    if (lobby.host->send(hostPacket) != sf::Socket::Status::Done) {
+        std::cerr << "[ERROR] Failed to notify host" << std::endl;
+    }
+
+    // Notificar a los peers
+    for (size_t i = 1; i < lobby.playerIPs.size(); ++i) {
         sf::TcpSocket tempSocket;
-        std::optional<sf::IpAddress> peerIP = sf::IpAddress::resolve(lobby.playerIPs[i]);
+        auto peerAddress = sf::IpAddress::resolve(lobby.playerIPs[i]);
 
-        if (!peerIP) {
-            std::cerr << "Error resolviendo IP: " << lobby.playerIPs[i] << std::endl;
+        if (!peerAddress) {
+            std::cerr << "[ERROR] Could not resolve peer IP: " << lobby.playerIPs[i] << std::endl;
             continue;
         }
 
-        if (tempSocket.connect(*peerIP, 53000) != sf::Socket::Status::Done) {
-            std::cerr << "Error conectando a " << lobby.playerIPs[i] << std::endl;
+        // Conexión con timeout explícito
+        if (tempSocket.connect(*peerAddress, 53000, sf::seconds(3)) != sf::Socket::Status::Done) {
+            std::cerr << "[ERROR] Failed to connect to peer: " << lobby.playerIPs[i] << std::endl;
             continue;
         }
 
@@ -53,7 +58,11 @@ void LobbyManager::startGame(const std::string& code) {
         for (size_t j = i + 1; j < lobby.playerIPs.size(); ++j) {
             peerPacket << lobby.playerIPs[j];
         }
-        tempSocket.send(peerPacket);
+
+        // Versión corregida para SFML 3.0.0
+        if (tempSocket.send(peerPacket) != sf::Socket::Status::Done) {
+            std::cerr << "[ERROR] Failed to send to peer: " << lobby.playerIPs[i] << std::endl;
+        }
     }
 
     lobbies.erase(code);
