@@ -1,63 +1,86 @@
 #include "LobbyManager.h"
+#include <iostream>
 
-bool LobbyManager::createLobby(const std::string& code, sf::TcpSocket* host, const std::string& hostIP) {
-    if (lobbies.count(code) > 0) return false;
+bool LobbyManager::createLobby(const std::string& code, sf::TcpSocket* host) {
+    if (lobbies.count(code) > 0) {
+        std::cout << "[SERVIDOR] Intento fallido de crear lobby - Código ya existe: " << code << std::endl;
+        return false;
+    }
 
     Lobby newLobby;
     newLobby.code = code;
-    newLobby.host = host;
-    newLobby.playerIPs.push_back(hostIP); // Host es el primer jugador
+    newLobby.players.push_back(host);
     lobbies[code] = newLobby;
 
+    // Mostrar en consola del servidor
+    std::cout << "=====================================\n";
+    std::cout << "[SERVIDOR] NUEVO LOBBY CREADO:\n";
+    std::cout << "Código: " << code << "\n";
+    std::cout << "Host: " << host->getRemoteAddress().value() << ":" << host->getRemotePort() << "\n";
+    std::cout << "Jugadores conectados: 1/" << MAX_PLAYERS << "\n";
+    std::cout << "=====================================\n";
+
     return true;
 }
 
-bool LobbyManager::joinLobby(const std::string& code, const std::string& playerIP) {
+bool LobbyManager::joinLobby(const std::string& code, sf::TcpSocket* player) {
     auto it = lobbies.find(code);
-    if (it == lobbies.end() || it->second.gameStarted) return false;
-    if (it->second.playerIPs.size() >= MAX_PLAYERS) return false;
+    if (it == lobbies.end()) {
+        std::cout << "[SERVIDOR] Intento fallido de unirse - Lobby no existe: " << code << std::endl;
+        return false;
+    }
 
-    it->second.playerIPs.push_back(playerIP);
+    if (it->second.gameStarted) {
+        std::cout << "[SERVIDOR] Intento fallido de unirse - Partida ya comenzó: " << code << std::endl;
+        return false;
+    }
+
+    if (it->second.players.size() >= MAX_PLAYERS) {
+        std::cout << "[SERVIDOR] Intento fallido de unirse - Lobby lleno: " << code
+            << " (" << it->second.players.size() << "/" << MAX_PLAYERS << ")" << std::endl;
+        return false;
+    }
+
+    it->second.players.push_back(player);
+
+    // Mostrar actualización en consola
+    std::cout << "=====================================\n";
+    std::cout << "[SERVIDOR] JUGADOR UNIDO AL LOBBY:\n";
+    std::cout << "Código: " << code << "\n";
+    std::cout << "Nuevo jugador: " << player->getRemoteAddress().value() << ":" << player->getRemotePort() << "\n";
+    std::cout << "Total jugadores: " << it->second.players.size() << "/" << MAX_PLAYERS << "\n";
+    std::cout << "=====================================\n";
+
+    // Notificar a todos los jugadores del lobby
+    sf::Packet updatePacket;
+    updatePacket << "LOBBY_UPDATE" << static_cast<int>(it->second.players.size());
+
+    for (auto* p : it->second.players) {
+        p->send(updatePacket);
+    }
+
+    // Iniciar juego si se alcanzó el máximo de jugadores (1 en este caso)
+    if (it->second.players.size() == MAX_PLAYERS) {
+        startGame(code);
+    }
+
     return true;
 }
+
 
 void LobbyManager::startGame(const std::string& code) {
     auto& lobby = lobbies[code];
     lobby.gameStarted = true;
 
-    // 1. Primero notificar a los PEERs que escuchen
-    for (size_t i = 1; i < lobby.playerIPs.size(); ++i) {
-        sf::TcpSocket notifier;
-        auto peerAddress = sf::IpAddress::resolve(lobby.playerIPs[i]);
-        if (peerAddress && notifier.connect(*peerAddress, 53000, sf::seconds(2)) == sf::Socket::Status::Done) {
-            sf::Packet preparePacket;
-            preparePacket << "PREPARE_P2P";
-            notifier.send(preparePacket);
-            std::cout << "[P2P] Peer " << lobby.playerIPs[i] << " preparado" << std::endl;
+    // Notificar a todos los jugadores
+    sf::Packet startPacket;
+    startPacket << "GAME_START";
+
+    std::cout << "[SERVIDOR] Enviando GAME_START para lobby: " << code << std::endl;
+
+    for (auto* player : lobby.players) {
+        if (player->send(startPacket) != sf::Socket::Status::Done) {
+            std::cerr << "[SERVIDOR] Error al enviar GAME_START a jugador" << std::endl;
         }
     }
-
-    // 2. Esperar 1 segundo para que los peers preparen sus listeners
-    sf::sleep(sf::seconds(1));
-
-    // 3. Ahora notificar al HOST para que inicie conexiones
-    sf::Packet hostPacket;
-    hostPacket << "GAME_START" << "HOST";
-    for (size_t i = 1; i < lobby.playerIPs.size(); ++i) {
-        hostPacket << lobby.playerIPs[i];
-    }
-    lobby.host->send(hostPacket);
-
-    lobbies.erase(code);
-}
-
-const std::vector<std::string>& LobbyManager::getLobbyPlayers(const std::string& code) const {
-    static std::vector<std::string> emptyVector; // Para retornar algo seguro si no se encuentra el lobby
-
-    auto it = lobbies.find(code);
-    if (it != lobbies.end()) {
-        return it->second.playerIPs;
-    }
-
-    return emptyVector; // Retorna vector vacío si el lobby no existe
 }

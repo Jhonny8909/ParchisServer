@@ -13,67 +13,53 @@ void setupHandlers(PacketHandler& handler, LobbyManager& lobbyManager) {
             std::cerr << "Paquete AUTH mal formado" << std::endl;
             return;
         }
-        std::cerr << isLogin << username << password << std::endl;
 
         auto& db = DatabaseManager::getInstance();
         sql::Connection* con = db.getConnection();
         bool success = isLogin
             ? AuthService::loginUser(con, username, password)
             : AuthService::registerUser(con, username, password);
+        std::string message = success ? "Autenticación exitosa" : "Credenciales inválidas";
         db.releaseConnection(con);
 
         sf::Packet response;
-        response << "AUTH_RESPONSE" << success;
-        client->send(response);
+        response << "AUTH_RESPONSE" << success << message; // Ahora envía 3 valores
+        std::cerr << "Enviando respuesta: " << success << " - " << message << std::endl;
+
+        if (client->send(response) != sf::Socket::Status::Done) {
+            std::cerr << "Error al enviar respuesta" << std::endl;
+        }
         });
 
     // Handler de lobby
     handler.registerHandler("LOBBY", [&lobbyManager](sf::TcpSocket* client, sf::Packet& packet) {
-        std::string action, code, playerIP;
-        if (!(packet >> action >> code >> playerIP)) {
+        std::string action, code;
+        if (!(packet >> action >> code)) {
             std::cerr << "Paquete LOBBY mal formado" << std::endl;
             return;
         }
 
-        std::cout << "\n[LOBBY_DEBUG] Solicitud recibida - Acción: " << action
-            << ", Código: " << code << ", IP: " << playerIP << std::endl;
-
         sf::Packet response;
+        std::string status;
 
         if (action == "CREAR") {
-            bool created = lobbyManager.createLobby(code, client, playerIP);
-            response << "LOBBY_RESPONSE" << (created ? "CREATED" : "EXISTS") << code;
-            std::cout << "[LOBBY_DEBUG] Lobby " << code << (created ? " creado" : " ya existe") << "\n";
+            bool created = lobbyManager.createLobby(code, client);
+            status = created ? "CREATED" : "EXISTS";
+            response << "LOBBY_RESPONSE" << status << code;
         }
         else if (action == "UNIRSE") {
-            bool joined = lobbyManager.joinLobby(code, playerIP);
-            response << "LOBBY_RESPONSE" << (joined ? "JOINED" : "FULL_OR_INVALID") << code;
-            std::cout << "[LOBBY_DEBUG] Intento de unión a " << code << ": " << (joined ? "éxito" : "fallo") << "\n";
-
-            if (joined) {
-                auto& players = lobbyManager.getLobbyPlayers(code);
-                std::cout << "[LOBBY_DEBUG] Jugadores actuales en " << code << " (" << players.size() << "):\n";
-                for (size_t i = 0; i < players.size(); ++i) {
-                    std::cout << " - " << players[i] << (i == 0 ? " (HOST)" : "") << std::endl;
-                }
-
-                if (players.size() >= 2) {
-                    std::cout << "[LOBBY_DEBUG] Iniciando partida...\n";
-                    lobbyManager.startGame(code);
-                }
-            }
+            bool joined = lobbyManager.joinLobby(code, client);
+            status = joined ? "JOINED" : "FULL_OR_INVALID";
+            response << "LOBBY_RESPONSE" << status << code;
+        }
+        else {
+            status = "INVALID_ACTION";
+            response << "LOBBY_RESPONSE" << status << "";
         }
 
         if (client->send(response) != sf::Socket::Status::Done) {
-            std::cerr << "[ERROR] Error enviando respuesta de lobby\n";
+            std::cerr << "Error al enviar respuesta LOBBY" << std::endl;
         }
-        else {
-            std::cout << "[LOBBY_DEBUG] Respuesta enviada al cliente\n";
-        }
-        });
-
-    handler.registerHandler("PREPARE_P2P", [](sf::TcpSocket* client, sf::Packet& packet) {
-        std::cout << "[P2P] Preparando conexión P2P..." << std::endl;
         });
 }
 
