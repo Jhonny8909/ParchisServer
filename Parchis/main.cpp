@@ -61,6 +61,22 @@ void setupHandlers(PacketHandler& handler, LobbyManager& lobbyManager) {
             std::cerr << "Error al enviar respuesta LOBBY" << std::endl;
         }
         });
+
+    handler.registerHandler("GAME", [&lobbyManager](sf::TcpSocket* client, sf::Packet& packet) {
+        std::string lobbyCode;
+        if (!(packet >> lobbyCode)) {
+            std::cerr << "Paquete GAME mal formado (falta código de lobby)" << std::endl;
+            return;
+        }
+
+        // Crear un nuevo paquete con el resto del contenido
+        sf::Packet gamePacket;
+        std::string remainingData;
+        packet >> remainingData;
+        gamePacket << remainingData;
+
+        lobbyManager.manejarPaqueteJuego(client, gamePacket, lobbyCode);
+        });
 }
 
 int main() {
