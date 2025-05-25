@@ -8,11 +8,11 @@
 constexpr int MAX_PLAYERS_LOBBY = 4;  // Definimos la constante aquí
 
 enum class ColorJugador {
-    ROJO,
-    AMARILLO,
-    VERDE,
-    AZUL,
-    NINGUNO
+    ROJO = 0,
+    AMARILLO = 1,
+    VERDE = 2,
+    AZUL = 3,
+    NINGUNO = 4
 };
 
 enum class EstadoJuego {
@@ -48,24 +48,25 @@ struct Lobby {
     bool gameStarted = false;
 
     Lobby() : players(MAX_PLAYERS_LOBBY, nullptr) {
-        // Inicializar colores disponibles
+        // Inicializar colores disponibles en orden FIJO
         coloresDisponibles = {
-            ColorJugador::ROJO,
-            ColorJugador::AMARILLO,
-            ColorJugador::VERDE,
-            ColorJugador::AZUL
+            ColorJugador::ROJO,    // Slot 0 - Host
+            ColorJugador::AMARILLO, // Slot 1
+            ColorJugador::VERDE,   // Slot 2
+            ColorJugador::AZUL     // Slot 3
         };
     }
 
     std::vector<ColorJugador> coloresDisponibles;
 
-    ColorJugador asignarColor() {
-        if (!coloresDisponibles.empty()) {
-            ColorJugador color = coloresDisponibles.back();
-            coloresDisponibles.pop_back();
-            return color;
+    ColorJugador asignarColor(size_t slot) {
+        switch (slot) {
+        case 0: return ColorJugador::ROJO;
+        case 1: return ColorJugador::AMARILLO;
+        case 2: return ColorJugador::VERDE;
+        case 3: return ColorJugador::AZUL;  // Asignación explícita para slot 3
+        default: return ColorJugador::NINGUNO;
         }
-        return ColorJugador::NINGUNO;
     }
 };
 
@@ -75,11 +76,14 @@ public:
     bool joinLobby(const std::string& code, sf::TcpSocket* player);
     void startGame(const std::string& code);
     void manejarPaqueteJuego(sf::TcpSocket* client, sf::Packet& packet, const std::string& lobbyCode);
+    void manejarConsultaTurno(sf::TcpSocket* client, const std::string& lobbyCode);
+    void notificarCambioTurno(const std::string& lobbyCode);
 
 private:
     void cambiarTurno(const std::string& lobbyCode);
     void enviarEstadoPartida(const std::string& lobbyCode);
     void procesarMovimiento(const std::string& lobbyCode, int jugadorId, int fichaId, int pasos);
+    void actualizarEstadoJuego(const std::string& code);
 
     std::map<std::string, Lobby> lobbies;
     static const int MAX_PLAYERS = MAX_PLAYERS_LOBBY; // Mantenemos por compatibilidad

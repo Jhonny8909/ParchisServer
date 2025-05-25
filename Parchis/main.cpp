@@ -77,6 +77,16 @@ void setupHandlers(PacketHandler& handler, LobbyManager& lobbyManager) {
 
         lobbyManager.manejarPaqueteJuego(client, gamePacket, lobbyCode);
         });
+
+    handler.registerHandler("CONSULTA_TURNO", [&lobbyManager](sf::TcpSocket* client, sf::Packet& packet) {
+        std::string lobbyCode;
+        if (packet >> lobbyCode) {
+            lobbyManager.manejarConsultaTurno(client, lobbyCode);
+        }
+        else {
+            std::cerr << "Paquete CONSULTA_TURNO mal formado" << std::endl;
+        }
+        });
 }
 
 int main() {
