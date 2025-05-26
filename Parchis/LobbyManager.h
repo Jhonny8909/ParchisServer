@@ -15,6 +15,18 @@ enum class ColorJugador {
     NINGUNO = 4
 };
 
+// Sobrecarga de operadores para serialización (¡en el mismo header!)
+inline sf::Packet& operator<<(sf::Packet& packet, const ColorJugador& color) {
+    return packet << static_cast<int>(color);  // Serializa el enum como int
+}
+
+inline sf::Packet& operator>>(sf::Packet& packet, ColorJugador& color) {
+    int temp;
+    packet >> temp;  // Deserializa el int
+    color = static_cast<ColorJugador>(temp);  // Convierte a enum
+    return packet;
+}
+
 enum class EstadoJuego {
     ESPERANDO_TIRADA,
     DADO_LANZADO,
@@ -76,11 +88,14 @@ public:
     bool joinLobby(const std::string& code, sf::TcpSocket* player);
     void startGame(const std::string& code);
     void manejarPaqueteJuego(sf::TcpSocket* client, sf::Packet& packet, const std::string& lobbyCode);
-    void manejarConsultaTurno(sf::TcpSocket* client, const std::string& lobbyCode);
     void notificarCambioTurno(const std::string& lobbyCode);
+    void broadcastToLobby(const std::string& lobbyCode, sf::Packet& packet);
+    Lobby& getLobby(const std::string& code);
+    const Lobby& getLobby(const std::string& code) const; // Versión constante
+    void cambiarTurno(const std::string& lobbyCode);
 
 private:
-    void cambiarTurno(const std::string& lobbyCode);
+    
     void enviarEstadoPartida(const std::string& lobbyCode);
     void procesarMovimiento(const std::string& lobbyCode, int jugadorId, int fichaId, int pasos);
     void actualizarEstadoJuego(const std::string& code);

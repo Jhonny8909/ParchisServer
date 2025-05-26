@@ -65,26 +65,76 @@ void setupHandlers(PacketHandler& handler, LobbyManager& lobbyManager) {
     handler.registerHandler("GAME", [&lobbyManager](sf::TcpSocket* client, sf::Packet& packet) {
         std::string lobbyCode;
         if (!(packet >> lobbyCode)) {
-            std::cerr << "Paquete GAME mal formado (falta código de lobby)" << std::endl;
+            std::cerr << "Paquete GAME mal formado" << std::endl;
             return;
         }
 
-        // Crear un nuevo paquete con el resto del contenido
-        sf::Packet gamePacket;
-        std::string remainingData;
-        packet >> remainingData;
-        gamePacket << remainingData;
-
-        lobbyManager.manejarPaqueteJuego(client, gamePacket, lobbyCode);
+        // Pasar el paquete completo incluyendo el tipo
+        lobbyManager.manejarPaqueteJuego(client, packet, lobbyCode);
         });
 
     handler.registerHandler("CONSULTA_TURNO", [&lobbyManager](sf::TcpSocket* client, sf::Packet& packet) {
         std::string lobbyCode;
         if (packet >> lobbyCode) {
-            lobbyManager.manejarConsultaTurno(client, lobbyCode);
+            try {
+                const Lobby& lobby = lobbyManager.getLobby(lobbyCode);
+                bool esSuTurno = false;
+
+                // Buscar qué jugador está preguntando
+                for (size_t i = 0; i < lobby.partida.jugadores.size(); ++i) {
+                    if (lobby.partida.jugadores[i].socket == client) {
+                        esSuTurno = (lobby.partida.jugadorActual == static_cast<int>(i));
+                        break;
+                    }
+                }
+
+                sf::Packet respuesta;
+                respuesta << "RESPUESTA_TURNO" << esSuTurno;
+                client->send(respuesta);
+
+            }
+            catch (const std::exception& e) {
+                std::cerr << "Error en CONSULTA_TURNO: " << e.what() << std::endl;
+            }
         }
         else {
             std::cerr << "Paquete CONSULTA_TURNO mal formado" << std::endl;
+        }
+        });
+
+    handler.registerHandler("TIRAR_DADO", [&lobbyManager](sf::TcpSocket* client, sf::Packet& packet) {
+        std::string lobbyCode;
+        ColorJugador color;
+        if (!(packet >> lobbyCode >> color)) {
+            std::cerr << "Paquete TIRAR_DADO mal formado" << std::endl;
+            return;
+        }
+
+        int valorDado = 1 + (std::rand() % 6);
+
+        sf::Packet respuesta;
+        respuesta << "DADO_RESULTADO" << valorDado << color;
+        lobbyManager.broadcastToLobby(lobbyCode, respuesta);
+        });
+
+    handler.registerHandler("FIN_TURNO", [&lobbyManager](sf::TcpSocket* client, sf::Packet& packet) {
+        std::string lobbyCode;
+        ColorJugador color;
+        if (packet >> lobbyCode >> color) {
+            try {
+                Lobby& lobby = lobbyManager.getLobby(lobbyCode);
+
+                // Verificar que el que termina es efectivamente el jugador actual
+                if (lobby.partida.jugadores[lobby.partida.jugadorActual].color == color) {
+                    lobbyManager.cambiarTurno(lobbyCode);
+                }
+                else {
+                    std::cerr << "[SERVER] Intento ilegítimo de finalizar turno" << std::endl;
+                }
+            }
+            catch (const std::exception& e) {
+                std::cerr << "Error en FIN_TURNO: " << e.what() << std::endl;
+            }
         }
         });
 }

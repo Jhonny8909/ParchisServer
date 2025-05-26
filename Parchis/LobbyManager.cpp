@@ -1,4 +1,4 @@
-#include "LobbyManager.h"
+    #include "LobbyManager.h"
 #include <iostream>
 
 bool LobbyManager::createLobby(const std::string& code, sf::TcpSocket* host) {
@@ -96,21 +96,25 @@ bool LobbyManager::joinLobby(const std::string& code, sf::TcpSocket* player) {
 void LobbyManager::startGame(const std::string& code) {
     auto& lobby = lobbies[code];
     lobby.gameStarted = true;
+    lobby.partida.jugadorActual = 0; // Jugador rojo inicia
 
     for (size_t i = 0; i < lobby.players.size(); ++i) {
         if (lobby.players[i]) {
-            // Verificación adicional antes de enviar
-            if (lobby.partida.jugadores[i].color == ColorJugador::NINGUNO) {
-                std::cerr << "ERROR: Jugador " << i << " no tiene color asignado" << std::endl;
-                continue;
-            }
-
             sf::Packet startPacket;
+            // Asegurar el orden: tipo, color, código, booleano
             startPacket << "GAME_START"
                 << static_cast<int>(lobby.partida.jugadores[i].color)
-                << code;
+                << code
+                << (i == lobby.partida.jugadorActual); // true solo para el jugador actual
 
-            lobby.players[i]->send(startPacket);
+            std::cout << "[SERVER] Enviando GAME_START - Color: "
+                << static_cast<int>(lobby.partida.jugadores[i].color)
+                << ", Código: " << code
+                << ", Es turno: " << (i == lobby.partida.jugadorActual) << std::endl;
+
+            if (lobby.players[i]->send(startPacket) != sf::Socket::Status::Done) {
+                std::cerr << "Error notificando inicio a jugador " << i << std::endl;
+            }
         }
     }
 }
@@ -128,86 +132,83 @@ std::string colorToString(ColorJugador color) {
 
 
 void LobbyManager::manejarPaqueteJuego(sf::TcpSocket* client, sf::Packet& packet, const std::string& lobbyCode) {
-    auto it = lobbies.find(lobbyCode);
-    if (it == lobbies.end()) return;
+    std::string tipoPaquete;
+    if (!(packet >> tipoPaquete)) return;
 
-    auto& lobby = it->second;
-    auto& partida = lobby.partida;
-
-    // Determinar qué jugador está enviando el paquete
+    auto& lobby = lobbies[lobbyCode];
     int jugadorId = -1;
-    for (size_t i = 0; i < lobby.players.size(); ++i) {
-        if (lobby.players[i] == client) {
+
+    // Buscar jugador por socket y color
+    for (size_t i = 0; i < lobby.partida.jugadores.size(); ++i) {
+        if (lobby.partida.jugadores[i].socket == client) {
             jugadorId = i;
             break;
         }
     }
 
-    if (jugadorId == -1) return;
+    if (tipoPaquete == "TIRAR_DADO") {
+        ColorJugador color;
+        if (!(packet >> color)) return;
 
-    std::string tipoPaquete;
-    if (!(packet >> tipoPaquete)) return;
+        if (jugadorId == lobby.partida.jugadorActual &&
+            lobby.partida.jugadores[jugadorId].color == color) {
 
-    if (tipoPaquete == "TIRAR_DADO" && partida.estado == EstadoJuego::ESPERANDO_TIRADA && jugadorId == partida.jugadorActual) {
-        // Simular lanzamiento de dado
-        partida.dadoValue = rand() % 6 + 1;
-        partida.estado = EstadoJuego::DADO_LANZADO;
+            int valorDado = (std::rand() % 6) + 1;
+            lobby.partida.dadoValue = valorDado;
 
-        // Enviar resultado a todos
-        sf::Packet dadoPacket;
-        dadoPacket << "DADO_RESULTADO" << partida.dadoValue;
-        for (auto& jugador : partida.jugadores) {
-            if (jugador.socket) jugador.socket->send(dadoPacket);
+            sf::Packet respuesta;
+            respuesta << "DADO_RESULTADO" << valorDado << color; // Asegúrate de incluir el color
+            broadcastToLobby(lobbyCode, respuesta);
         }
     }
-    else if (tipoPaquete == "SELECCION_FICHA" && partida.estado == EstadoJuego::DADO_LANZADO && jugadorId == partida.jugadorActual) {
-        int fichaId;
-        if (!(packet >> fichaId)) return;
+    else if (tipoPaquete == "MOVIMIENTO") {
+        ColorJugador color;
+        int fichaId, nuevaPos;
+        if (!(packet >> color >> fichaId >> nuevaPos)) return;
 
-        // Validar que la ficha pertenece al jugador y puede moverse
-        if (fichaId >= 0 && fichaId < 4) {
-            partida.fichaSeleccionada = jugadorId * 4 + fichaId;
-            partida.estado = EstadoJuego::MOVIENDO_FICHA;
-
-            // Mover la ficha
-            int nuevaPosicion = partida.posicionesFichas[partida.fichaSeleccionada] + partida.dadoValue;
-            partida.posicionesFichas[partida.fichaSeleccionada] = nuevaPosicion;
+        // Validar movimiento
+        if (jugadorId == lobby.partida.jugadorActual) {
+            // Actualizar posición
+            lobby.partida.posicionesFichas[fichaId] = nuevaPos;
 
             // Notificar a todos
-            sf::Packet movimientoPacket;
-            movimientoPacket << "MOVIMIENTO_FICHA" << jugadorId << fichaId << nuevaPosicion;
-            for (auto& jugador : partida.jugadores) {
-                if (jugador.socket) jugador.socket->send(movimientoPacket);
-            }
+            sf::Packet update;
+            update << "ACTUALIZAR_POSICION" << color << fichaId << nuevaPos;
+            broadcastToLobby(lobbyCode, update);
 
-            // Cambiar turno
+            // Cambiar turno solo después de movimiento válido
             cambiarTurno(lobbyCode);
         }
     }
-
-    enviarEstadoPartida(lobbyCode);
 }
 
 void LobbyManager::cambiarTurno(const std::string& lobbyCode) {
-    auto& partida = lobbies[lobbyCode].partida;
+    auto& lobby = lobbies[lobbyCode];
+    int jugadorAnterior = lobby.partida.jugadorActual;
 
-    // Lógica para cambiar de turno (como antes)
-    int intentos = 0;
+    // Cambiar al siguiente jugador disponible
     do {
-        partida.jugadorActual = (partida.jugadorActual + 1) % MAX_PLAYERS_LOBBY;
-        intentos++;
-    } while (!partida.jugadores[partida.jugadorActual].socket && intentos < MAX_PLAYERS_LOBBY);
+        lobby.partida.jugadorActual = (lobby.partida.jugadorActual + 1) % MAX_PLAYERS_LOBBY;
+    } while (!lobby.partida.jugadores[lobby.partida.jugadorActual].socket &&
+        lobby.partida.jugadorActual != jugadorAnterior);
 
-    // Resetear estado del juego
-    partida.estado = EstadoJuego::ESPERANDO_TIRADA;
-    partida.dadoValue = 0;
-    partida.fichaSeleccionada = -1;
+    // Notificar a todos los jugadores
+    for (size_t i = 0; i < lobby.partida.jugadores.size(); ++i) {
+        if (lobby.partida.jugadores[i].socket) {
+            sf::Packet turnPacket;
+            bool esSuTurno = (static_cast<int>(i) == lobby.partida.jugadorActual);
+            turnPacket << "CAMBIAR_TURNO" << esSuTurno;
 
-    // Usar el nuevo sistema de notificación
-    notificarCambioTurno(lobbyCode);
-
-    // Opcional: enviar estado completo del juego
-    enviarEstadoPartida(lobbyCode);
+            if (lobby.partida.jugadores[i].socket->send(turnPacket) != sf::Socket::Status::Done) {
+                std::cerr << "Error notificando turno a jugador " << i << std::endl;
+            }
+            else {
+                std::cout << "[SERVER] Notificado jugador " << i
+                    << " (Color: " << static_cast<int>(lobby.partida.jugadores[i].color)
+                    << "), es su turno: " << esSuTurno << std::endl;
+            }
+        }
+    }
 }
 
 void LobbyManager::enviarEstadoPartida(const std::string& lobbyCode) {
@@ -237,49 +238,80 @@ void LobbyManager::actualizarEstadoJuego(const std::string& code) {
     enviarEstadoPartida(code);
 }
 
-void LobbyManager::manejarConsultaTurno(sf::TcpSocket* client, const std::string& lobbyCode) {
-    auto it = lobbies.find(lobbyCode);
-    if (it == lobbies.end()) return;
-
-    auto& partida = it->second.partida;
-
-    // Buscar al jugador que pregunta
-    int jugadorId = -1;
-    for (size_t i = 0; i < partida.jugadores.size(); ++i) {
-        if (partida.jugadores[i].socket == client) {
-            jugadorId = i;
-            break;
-        }
-    }
-
-    if (jugadorId == -1) return;
-
-    // Responder si es su turno
-    sf::Packet respuesta;
-    bool esSuTurno = (partida.jugadorActual == jugadorId);
-    respuesta << "RESPUESTA_TURNO" << esSuTurno;
-
-    if (client->send(respuesta) != sf::Socket::Status::Done) {
-        std::cerr << "Error al responder consulta de turno" << std::endl;
-    }
-}
-
 void LobbyManager::notificarCambioTurno(const std::string& lobbyCode) {
     auto it = lobbies.find(lobbyCode);
-    if (it == lobbies.end()) return;
+    if (it == lobbies.end()) {
+        std::cerr << "[SERVER ERROR] Lobby no encontrado: " << lobbyCode << std::endl;
+        return;
+    }
 
-    auto& partida = it->second.partida;
+    std::cout << "[SERVER] Preparando notificación de turno para lobby: " << lobbyCode
+        << ". Jugador actual: " << it->second.partida.jugadorActual << std::endl;
 
-    // Notificar a todos los jugadores
-    for (size_t i = 0; i < partida.jugadores.size(); ++i) {
-        if (partida.jugadores[i].socket) {
-            sf::Packet notificacion;
-            bool esSuTurno = (partida.jugadorActual == static_cast<int>(i));
-            notificacion << "CAMBIAR_TURNO" << esSuTurno;
+    for (size_t i = 0; i < it->second.partida.jugadores.size(); ++i) {
+        if (it->second.partida.jugadores[i].socket) {
+            sf::Packet notif;
+            bool esSuTurno = (it->second.partida.jugadorActual == static_cast<int>(i));
+            notif << "CAMBIAR_TURNO" << esSuTurno;
 
-            if (partida.jugadores[i].socket->send(notificacion) != sf::Socket::Status::Done) {
-                std::cerr << "Error al notificar cambio de turno al jugador " << i << std::endl;
+            std::cout << "[SERVER] Enviando a jugador " << i
+                << " (Color: " << static_cast<int>(it->second.partida.jugadores[i].color)
+                << "), Socket: " << it->second.partida.jugadores[i].socket
+                << ", Es su turno: " << esSuTurno << std::endl;
+
+            sf::Socket::Status status = it->second.partida.jugadores[i].socket->send(notif);
+
+            if (status != sf::Socket::Status::Done) {
+                std::cerr << "[SERVER ERROR] Fallo al enviar a jugador " << i
+                    << ". Código de error: " << static_cast<int>(status) << std::endl;
+            }
+            else {
+                std::cout << "[SERVER] Notificación enviada con éxito a jugador " << i << std::endl;
             }
         }
     }
+}
+
+void LobbyManager::broadcastToLobby(const std::string& lobbyCode, sf::Packet& packet) {
+    auto it = lobbies.find(lobbyCode);
+    if (it != lobbies.end()) {
+        // Clonar el paquete para no afectar el original
+        sf::Packet packetCopy;
+        std::string packetType;
+        packet >> packetType;
+        packetCopy << packetType;
+
+        // Copiar el resto del contenido
+        while (!packet.endOfPacket()) {
+            std::string data;
+            packet >> data;
+            packetCopy << data;
+        }
+
+        for (auto& jugador : it->second.partida.jugadores) {
+            if (jugador.socket) {
+                // Enviar copia del paquete
+                if (jugador.socket->send(packetCopy) != sf::Socket::Status::Done) {
+                    std::cerr << "[SERVER] Error enviando a jugador "
+                        << static_cast<int>(jugador.color) << std::endl;
+                }
+            }
+        }
+    }
+}
+
+Lobby& LobbyManager::getLobby(const std::string& code) {
+    auto it = lobbies.find(code);
+    if (it == lobbies.end()) {
+        throw std::runtime_error("Lobby no encontrado: " + code);
+    }
+    return it->second;
+}
+
+const Lobby& LobbyManager::getLobby(const std::string& code) const {
+    auto it = lobbies.find(code);
+    if (it == lobbies.end()) {
+        throw std::runtime_error("Lobby no encontrado: " + code);
+    }
+    return it->second;
 }
